@@ -13,10 +13,10 @@ class TelegramListener < Redmine::Hook::Listener
     params[:disable_web_page_preview] = 1
 
     if attachment
-      msg = msg +"\r\n"
-      msg = msg +attachment[:text] if attachment[:text]
+      msg = msg + "\r\n"
+      msg = msg + attachment[:text] if attachment[:text]
       for field_item in attachment[:fields] do
-        msg = msg +"\r\n"+"<b>"+field_item[:title]+":</b> "+field_item[:value]
+        msg = msg + "\r\n" + "<b>" + field_item[:title] + ":</b> " + field_item[:value]
       end
     end
 
@@ -24,23 +24,23 @@ class TelegramListener < Redmine::Hook::Listener
 
     Rails.logger.info("TELEGRAM SEND TO: #{channel}")
 
-    begin
-      if Setting.plugin_redmine_telegram_global[:use_proxy] == '1'
-        client = HTTPClient.new(proxyurl)
-      else
-        client = HTTPClient.new
-      end
-      # client.ssl_config.cert_store.set_default_paths
-      # client.ssl_config.ssl_version = "SSLv23"
-      # client.post_async url, {:payload => params.to_json}
-      client.send_timeout = 1
-      client.receive_timeout = 1
-      conn = client.post_async(url, params)
-      Rails.logger.info("TELEGRAM RETURN CODE: #{conn.pop.status_code}")
-    rescue Exception => e
-      Rails.logger.warn("TELEGRAM CANNOT CONNECT TO #{url}")
-      Rails.logger.warn(e)
+    # begin
+    if Setting.plugin_redmine_telegram_global[:use_proxy] == '1'
+      client = HTTPClient.new(proxyurl)
+    else
+      client = HTTPClient.new
     end
+    # client.ssl_config.cert_store.set_default_paths
+    # client.ssl_config.ssl_version = "SSLv23"
+    # client.post_async url, {:payload => params.to_json}
+    client.send_timeout = 1
+    client.receive_timeout = 1
+    client.post_async(url, params)
+    #Rails.logger.info("TELEGRAM RETURN CODE: #{conn.pop.status_code}")
+    # rescue Exception => e
+    # Rails.logger.warn("TELEGRAM CANNOT CONNECT TO #{url}")
+    # Rails.logger.warn(e)
+    # end
   end
 
   def controller_issues_new_after_save(context={})
@@ -55,7 +55,7 @@ class TelegramListener < Redmine::Hook::Listener
     return unless channel
 
     # we dont care about any privacy, right? if not - uncomment it:
-    # return if issue.is_private?
+    return if issue.is_private?
 
     msg = "<b>[#{escape issue.project}]</b>\n<a href='#{object_url issue}'>#{escape issue}</a> #{mentions issue.description if Setting.plugin_redmine_telegram_global[:auto_mentions] == '1'}\n<b>#{escape issue.author}</b> #{l(:field_created_on)}\n"
 
